@@ -3,4 +3,5 @@
 
 <b>Link to paper:</b> https://arxiv.org/pdf/2412.07199
 
-
+### ADV_GEN Framework
+![Image not available.](images/ADV_GEN_Framework.jpg)
