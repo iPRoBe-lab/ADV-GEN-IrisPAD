@@ -4,4 +4,5 @@
 <b>Link to paper:</b> https://arxiv.org/pdf/2412.07199
 
 ### ADV_GEN Framework
+A convolutional autoencoder (CAE) is trained using the original iris images including both bonafides and PAs, along with trasformation parameter vectors, to generate synthetic adversarial images. A transformation paratmeter vector consists of both geometric and photometric transformations such as translation, rotation, shear, solarize, scale, sharpness, brightness, and contrast. Reconstruction loss (Mean Squared Error) is used to ensure similarity between generated transformed iris images and transformed original images. To make the generated transformed images adversarial, these are passed through Standard PAD classifier (trained with original images) to obtain PA scores and an adversarial loss (BCE loss between these PA scores and the inverted class labels maximizing the misclassification error) is backpropagated to the CAE, forcing the generated images to be misclassified by the Standard PAD classifier.     
 ![Image not available.](images/ADV_GEN_Framework.jpg)
