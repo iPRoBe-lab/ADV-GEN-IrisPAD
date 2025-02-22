@@ -64,7 +64,7 @@ class Trainer():
             for phase in ['train', 'val']:
                 predict_scores = []
                 true_labels = []
-                loss = 0
+                epoch_loss = 0
                 if phase == 'train':
                     self.model.train()
                 else:
@@ -78,7 +78,7 @@ class Trainer():
                         loss = self.model_criterion(output, labels)
                         predict_scores.extend(torch.sigmoid(output.detach()).cpu().numpy())
                         true_labels.extend(labels.cpu().numpy().astype(int))
-                        loss +=loss.item()
+                        epoch_loss +=loss.item()
                         if phase == 'train':
                             self.optimizer.zero_grad()
                             loss.backward()
@@ -90,12 +90,12 @@ class Trainer():
                 correct_predictions = np.sum(np.array(predict_labels) == true_labels)
                 if phase == 'train':
                     train_acc = float(correct_predictions)/float(len(true_labels))
-                    train_loss = loss/len(self.dataloader['train'])    
-                    train_loss_hist.append(train_loss.item())
+                    train_loss = epoch_loss/len(self.dataloader['train'])    
+                    train_loss_hist.append(train_loss)
                 elif phase == 'val':
                     val_acc = float(correct_predictions)/float(len(true_labels))
-                    val_loss = loss/len(self.dataloader['val'])  
-                    val_loss_hist.append(val_loss.item())  
+                    val_loss = epoch_loss/len(self.dataloader['val'])  
+                    val_loss_hist.append(val_loss)  
                     
                     if (val_loss<=best_loss or val_acc > best_accuracy):
                         best_loss = val_loss
