@@ -177,9 +177,8 @@ class Trainer():
                 output= self.model(images, aug_params_input_scaled)
                 reconstruction_loss = self.model_criterion(output, transformed_images)
                 
-                D_NETPAD_output = self.get_PAD_output(denorm(output))
-                #label_output = torch.argmax(D_NETPAD_output, dim=1).type(torch.FloatTensor).to(self.device)
-                classifier_loss = self.classifier_criterion(D_NETPAD_output, 1-labels)
+                PAD_output = self.get_PAD_output(denorm(output))
+                classifier_loss = self.classifier_criterion(PAD_output, 1-labels)
                 self.optimizer.zero_grad()
                 total_loss = reconstruction_loss + self.args.lambda_adv*classifier_loss
                 total_loss.backward()
@@ -212,12 +211,12 @@ class Trainer():
                     transformed_images = torchvision.transforms.Lambda(lambda images: torch.stack(
                          [self.apply_augmentation(images[i],augmentation_params_input[i]) for i in range(current_batch_size)]))(images)
 
-                    D_NETPAD_output_trans_images = self.get_PAD_output(transformed_images.to(self.device))
-                    D_NETPAD_label_trans_images = torch.where((torch.sigmoid(D_NETPAD_output_trans_images).detach())>=self.args.threshold, 1.0, 0.0)
+                    PAD_output_trans_images = self.get_PAD_output(transformed_images.to(self.device))
+                    PAD_label_trans_images = torch.where((torch.sigmoid(PAD_output_trans_images).detach())>=self.args.threshold, 1.0, 0.0)
                     
-                    #trans_test_missclassified += torch.sum((D_NETPAD_label_trans_images == 1-labels).int())
-                    bonafide_test_missclassified += torch.sum(D_NETPAD_label_trans_images[bonafide_mask] == (1-labels[bonafide_mask])).int().item()
-                    PA_test_missclassified += torch.sum(D_NETPAD_label_trans_images[PA_mask] == (1-labels[PA_mask])).int().item()
+                    #trans_test_missclassified += torch.sum((PAD_label_trans_images == 1-labels).int())
+                    bonafide_test_missclassified += torch.sum(PAD_label_trans_images[bonafide_mask] == (1-labels[bonafide_mask])).int().item()
+                    PA_test_missclassified += torch.sum(PAD_label_trans_images[PA_mask] == (1-labels[PA_mask])).int().item()
                     
                     images = self.normalize(images)
                     transformed_images = self.normalize(transformed_images)
@@ -228,9 +227,9 @@ class Trainer():
                     output = self.model(images, aug_params_input_scaled)
                     reconstruction_loss = self.model_criterion(output, transformed_images)
                     
-                    D_NETPAD_output = self.get_PAD_output(denorm(output))
-                    #label_output = torch.argmax(D_NETPAD_output, dim=1).type(torch.LongTensor).to(self.device)
-                    output_PAScore = torch.sigmoid(D_NETPAD_output).detach()
+                    PAD_output = self.get_PAD_output(denorm(output))
+                    #label_output = torch.argmax(PAD_output, dim=1).type(torch.LongTensor).to(self.device)
+                    output_PAScore = torch.sigmoid(PAD_output).detach()
                     
                     label_output = torch.where(output_PAScore>=self.args.threshold, 1.0, 0.0)
                     #correct_missclassifications = torch.sum((label_output == 1-labels).int())
@@ -238,11 +237,11 @@ class Trainer():
                     bonafide_missclassifications += torch.sum(label_output[bonafide_mask] == (1-labels[bonafide_mask])).int().item()
                     PA_missclassifications += torch.sum(label_output[PA_mask] == (1-labels[PA_mask])).int().item()
                     
-                    classifier_loss = self.classifier_criterion(D_NETPAD_output, 1-labels)
+                    classifier_loss = self.classifier_criterion(PAD_output, 1-labels)
                     total_loss = reconstruction_loss + self.args.lambda_adv*classifier_loss
                     test_loss.append(total_loss.item())
                     
-            self.lr_scheduler.step()
+            #self.lr_scheduler.step()
             print('Epoch [{}/{}], Train Loss: {:.8f}, Test Loss: {:.8f}, Transformed Test BPCER: {:.4f}, Transformed Test APCER: {:.4f}, Synthetic BPCER: {:.4f}, Synthetic APCER: {:.4f}'.format(
                     epoch+1, self.args.num_epochs, np.mean(train_loss), np.mean(test_loss), 
                     (bonafide_test_missclassified/bonafide_samples), (PA_test_missclassified/PA_samples),
